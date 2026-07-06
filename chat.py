@@ -48,13 +48,18 @@ Answer:
 """
 
     response = client.chat.completions.create(
-    model=CHAT_DEPLOYMENT,
-    messages=[
-        {
-            "role": "user",
-            "content": prompt,
-        }
-    ]
-)
+        model=CHAT_DEPLOYMENT,
+        messages=[
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ]
+    )
+    
+    return {
+        "answer": response.choices[0].message.content,
+        "sources": docs
+    }
 
-    return response.choices[0].message.content
+
