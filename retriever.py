@@ -21,22 +21,30 @@ db = Chroma(
     embedding_function=embeddings,
 )
 
-retriever = db.as_retriever(
-    search_type="similarity",
-    search_kwargs={"k": 4},
-)
+# retriever = db.as_retriever(
+#     search_type="similarity",
+#     search_kwargs={"k": 4},
+# )
 
-query = "What is the company's leave policy?"
+def get_retriever():
+    return db.as_retriever(
+        search_type="similarity",
+        search_kwargs={"k": 4},
+    )
 
-docs = retriever.invoke(query)
+if __name__ == "__main__":
 
-print(f"Retrieved {len(docs)} documents\n")
+    retriever = get_retriever()
 
-for i, doc in enumerate(docs, start=1):
-    print("=" * 70)
-    print(f"Chunk {i}")
-    print("=" * 70)
-    print(doc.page_content)
-    print("\nMetadata:")
-    print(doc.metadata)
-    print()
+    docs = retriever.invoke(
+        "What is the company's leave policy?"
+    )
+
+    print(f"Retrieved {len(docs)} chunks\n")
+
+    for i, doc in enumerate(docs, start=1):
+        print("=" * 70)
+        print(f"Chunk {i}")
+        print("=" * 70)
+        print(doc.page_content)
+        print()
