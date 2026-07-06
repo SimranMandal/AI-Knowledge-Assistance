@@ -1,16 +1,25 @@
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-#from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_chroma import Chroma
 from langchain_openai import AzureOpenAIEmbeddings
-from dotenv import load_dotenv
+
 import os
-from langchain_community.vectorstores import Chroma
 
-load_dotenv()
+from config import (
+    AZURE_OPENAI_ENDPOINT,
+    AZURE_OPENAI_API_KEY,
+    AZURE_OPENAI_API_VERSION,
+    EMBEDDING_DEPLOYMENT,
+    CHROMA_DB_DIR,
+    DATA_DIR
+)
 
-loader = PyPDFLoader("data/company_policy.pdf")
+pdf_path = os.path.join(DATA_DIR, "company_policy.pdf")
 
+loader = PyPDFLoader(pdf_path)
 documents = loader.load()
+
+print(f"Loaded {len(documents)} pages")
 
 splitter = RecursiveCharacterTextSplitter(
     chunk_size=1000,
@@ -19,30 +28,21 @@ splitter = RecursiveCharacterTextSplitter(
 
 chunks = splitter.split_documents(documents)
 
-print(f"Number of chunks: {len(chunks)}")
-
-print("\nFirst Chunk:\n")
-for i, chunk in enumerate(chunks):
-    print(f"\n========== CHUNK {i+1} ==========\n")
-    print(chunk.page_content)
-
-# embeddings = HuggingFaceEmbeddings(
-#     model_name="all-MiniLM-L6-v2"
-# )
+print(f"Created {len(chunks)} chunks")
 
 embeddings = AzureOpenAIEmbeddings(
-    azure_deployment=os.getenv("AZURE_OPENAI_EMBEDDING_DEPLOYMENT"),
-    api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-    api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
+    azure_endpoint=AZURE_OPENAI_ENDPOINT,
+    api_key=AZURE_OPENAI_API_KEY,
+    api_version=AZURE_OPENAI_API_VERSION,
+    azure_deployment=EMBEDDING_DEPLOYMENT,
 )
 
-print("Embedding model loaded successfully")
+print("Embedding model initialized")
 
 db = Chroma.from_documents(
-    chunks,
-    embeddings,
-    persist_directory="chroma_db"
+    documents=chunks,
+    embedding=embeddings,
+    persist_directory=CHROMA_DB_DIR
 )
 
-db.persist()
+print("Vector database created successfully!")
